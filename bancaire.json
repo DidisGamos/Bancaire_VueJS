@@ -1,0 +1,28 @@
+{
+  "bancaire": [
+    {
+      "numCompte": "C002",
+      "nom": "Elliot",
+      "solde": 2000,
+      "id": "1db9"
+    },
+    {
+      "numCompte": "C004",
+      "nom": "Fenitra",
+      "solde": 600,
+      "id": "4289"
+    },
+    {
+      "id": "1c6a",
+      "numCompte": "C001",
+      "nom": "Didis",
+      "solde": 5001
+    },
+    {
+      "id": "3180",
+      "numCompte": "C003",
+      "nom": "Jessica Harena",
+      "solde": 2000
+    }
+  ]
+}

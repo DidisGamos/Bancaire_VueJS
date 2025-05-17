@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Bancaire</title>
+  <link rel="icon" href="./Vue.js_Logo.png">
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue.js via CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.8.4/axios.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#6366f1',
+              light: '#818cf8',
+              dark: '#4f46e5',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --color-primary: #6366f1;
+      --color-primary-light: #818cf8;
+      --color-primary-dark: #4f46e5;
+    }
+
+    .bg-primary {
+      background-color: var(--color-primary);
+    }
+
+    .bg-primary-light {
+      background-color: var(--color-primary-light);
+    }
+
+    .text-primary {
+      color: var(--color-primary);
+    }
+
+    .from-primary {
+      --tw-gradient-from: var(--color-primary);
+    }
+
+    .to-primary-light {
+      --tw-gradient-to: var(--color-primary-light);
+    }
+
+    .focus\:ring-primary:focus {
+      --tw-ring-color: var(--color-primary);
+      --tw-ring-opacity: 0.5;
+    }
+
+    /* Transitions */
+    .modal-enter-active,
+    .modal-leave-active {
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .modal-enter-from,
+    .modal-leave-to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    /* Mode sombre */
+    .dark {
+      color-scheme: dark;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-primary: #818cf8;
+        --color-primary-light: #a5b4fc;
+        --color-primary-dark: #6366f1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div
+      class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100">
+      <header class="bg-white dark:bg-gray-800 shadow-md">
+        <div class="container mx-auto px-4 py-6">
+          <div class="flex items-center justify-between">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
+              <span class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                </svg>
+                Gestion Bancaire
+              </span>
+            </h1>
+            <button @click="toggleDarkMode"
+              class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="container mx-auto px-4 py-8">
+        <!-- Formulaire d'ajout de client -->
+        <div
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-xl mb-8 overflow-hidden transition-all duration-300 transform hover:shadow-2xl">
+          <div class="bg-gradient-to-r from-primary to-primary-light p-4">
+            <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Ajouter un client
+            </h2>
+          </div>
+          <form @submit.prevent="ajouterClient" class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="form-group">
+                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Numéro de compte</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 9v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9" />
+                      <path d="M9 22V12h6v10" />
+                      <path d="M2 10.6L12 2l10 8.6" />
+                    </svg>
+                  </span>
+                  <input v-model="nouveauClient.numCompte" type="text" required
+                    class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="Ex: C001" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Nom</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </span>
+                  <input v-model="nouveauClient.nom" type="text" required
+                    class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="Ex: Didis Gamos" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Solde (Ar)</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="1" x2="12" y2="23" />
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
+                  </span>
+                  <input v-model.number="nouveauClient.solde" type="number" required
+                    class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="Ex: 1000" />
+                </div>
+              </div>
+            </div>
+            <div class="mt-6">
+              <button type="submit"
+                class="bg-gradient-to-r from-primary to-primary-light text-white px-6 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Ajouter
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tableau des clients -->
+        <div
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-xl mb-8 overflow-hidden transition-all duration-300 transform hover:shadow-2xl">
+          <div class="bg-gradient-to-r from-primary to-primary-light p-4">
+            <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              Liste des clients
+            </h2>
+          </div>
+          <div class="p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 dark:bg-gray-700 text-left">
+                    <th class="p-3 font-semibold">Numéro de compte</th>
+                    <th class="p-3 font-semibold">Nom</th>
+                    <th class="p-3 font-semibold">Solde (Ar)</th>
+                    <th class="p-3 font-semibold">Observation</th>
+                    <th class="p-3 text-center font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(client, index) in clients" :key="client.numCompte"
+                    class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <td class="p-3">{{ client.numCompte }}</td>
+                    <td class="p-3">{{ client.nom }}</td>
+                    <td class="p-3 font-medium">
+                      <span :class="{
+                        'text-red-500': client.solde < 1000,
+                        'text-yellow-500': client.solde >= 1000 && client.solde <= 5000,
+                        'text-green-500': client.solde > 5000
+                      }">
+                        {{ client.solde.toFixed(2) }} Ar
+                      </span>
+                    </td>
+                    <td class="p-3">
+                      <span :class="{
+                          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': client.solde < 1000,
+                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': client.solde >= 1000 && client.solde <= 5000,
+                          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': client.solde > 5000
+                        }" class="px-2 py-1 rounded-full text-xs font-medium">
+                        {{ getObservation(client.solde) }}
+                      </span>
+                    </td>
+                    <td class="p-3 text-center">
+                      <button @click="editerClient(index)"
+                        class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg mr-2 transition-colors"
+                        title="Modifier">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                      <button @click="supprimerClient(index)"
+                        class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
+                        title="Supprimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="clients.length === 0">
+                    <td colspan="5" class="p-6 text-center text-gray-500 dark:text-gray-400">
+                      <div class="flex flex-col items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        Aucun client enregistré
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <!-- Cartes de statistiques -->
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden transition-all duration-300 transform hover:shadow-2xl">
+            <div class="bg-gradient-to-r from-primary to-primary-light p-4">
+              <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                Statistiques
+              </h2>
+            </div>
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div
+                  class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 p-6 rounded-xl shadow-sm">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-blue-700 dark:text-blue-300">Solde total</h3>
+                    <span class="bg-blue-200 dark:bg-blue-700 p-2 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-700 dark:text-blue-300"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23" />
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                    </span>
+                  </div>
+                  <p class="text-3xl font-bold text-blue-700 dark:text-blue-300">{{ soldeTotal.toFixed(2) }} Ar</p>
+                  <p class="text-sm text-blue-600 dark:text-blue-400 mt-2">Total des soldes clients</p>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900 dark:to-red-800 p-6 rounded-xl shadow-sm">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-red-700 dark:text-red-300">Solde minimal</h3>
+                    <span class="bg-red-200 dark:bg-red-700 p-2 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-700 dark:text-red-300"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <polyline points="19 12 12 19 5 12" />
+                      </svg>
+                    </span>
+                  </div>
+                  <p class="text-3xl font-bold text-red-700 dark:text-red-300">{{ soldeMinimal.toFixed(2) }} Ar</p>
+                  <p class="text-sm text-red-600 dark:text-red-400 mt-2">Solde le plus bas</p>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 p-6 rounded-xl shadow-sm">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-green-700 dark:text-green-300">Solde maximal</h3>
+                    <span class="bg-green-200 dark:bg-green-700 p-2 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-700 dark:text-green-300"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="12" y1="19" x2="12" y2="5" />
+                        <polyline points="5 12 12 5 19 12" />
+                      </svg>
+                    </span>
+                  </div>
+                  <p class="text-3xl font-bold text-green-700 dark:text-green-300">{{ soldeMaximal.toFixed(2) }} Ar</p>
+                  <p class="text-sm text-green-600 dark:text-green-400 mt-2">Solde le plus élevé</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Histogramme -->
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden transition-all duration-300 transform hover:shadow-2xl">
+            <div class="bg-gradient-to-r from-primary to-primary-light p-4">
+              <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="3" width="15" height="13" />
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                  <circle cx="5.5" cy="18.5" r="2.5" />
+                  <circle cx="18.5" cy="18.5" r="2.5" />
+                </svg>
+                Histogramme des soldes
+              </h2>
+            </div>
+            <div class="p-6">
+              <div v-if="clients.length === 0"
+                class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Aucune donnée à afficher
+              </div>
+              <div v-else class="h-64 flex items-end gap-2 mt-4">
+                <div v-for="client in clients" :key="client.numCompte" class="flex flex-col items-center flex-1">
+                  <div :style="`height: ${(client.solde / soldeMaximal) * 100}%`"
+                    class="w-full bg-gradient-to-t from-primary to-primary-light rounded-t-lg transition-all duration-500 hover:from-primary-light hover:to-primary transform hover:scale-105">
+                  </div>
+                  <span class="text-xs mt-2 truncate w-full text-center">{{ client.nom }}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">{{ client.solde.toFixed(0) }} Ar</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camembert (représentation visuelle) -->
+        <div
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden transition-all duration-300 transform hover:shadow-2xl mb-8">
+          <div class="bg-gradient-to-r from-primary to-primary-light p-4">
+            <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                <path d="M2 12h20" />
+              </svg>
+              Répartition des soldes
+            </h2>
+          </div>
+          <div class="p-6">
+            <div v-if="clients.length === 0"
+              class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              Aucune donnée à afficher
+            </div>
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <!-- Barres de répartition -->
+              <div class="flex flex-col justify-center space-y-4">
+                <div v-for="(client, index) in clients" :key="client.numCompte" class="mb-2">
+                  <div class="flex items-center mb-1">
+                    <div class="w-24 truncate font-medium">{{ client.nom }}</div>
+                    <div class="ml-2 text-sm text-gray-500 dark:text-gray-400">{{ ((client.solde / soldeTotal) *
+                      100).toFixed(1) }}%</div>
+                  </div>
+                  <div class="h-6 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div :style="`width: ${(client.solde / soldeTotal) * 100}%`"
+                      :class="`h-full rounded-full transition-all duration-500 ${getBarColor(index)}`"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Représentation visuelle du camembert -->
+              <div class="flex items-center justify-center">
+                <div class="relative w-48 h-48">
+                  <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e5e7eb" stroke-width="20" />
+                    <template v-for="(segment, index) in pieSegments" :key="index">
+                      <circle cx="50" cy="50" r="40" fill="transparent" :stroke="getPieColor(index)" stroke-width="20"
+                        :stroke-dasharray="`${segment.percentage} 100`" :stroke-dashoffset="`${-segment.offset}`"
+                        transform="rotate(-90 50 50)" class="transition-all duration-500" />
+                    </template>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                      <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total</div>
+                      <div class="text-xl font-bold">{{ soldeTotal.toFixed(0) }} Ar</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    </main>
+
+    <!-- Modal de modification -->
+    <div v-if="modalEdition" class="fixed inset-0 z-50 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div class="absolute inset-0 bg-gray-900 opacity-75"></div>
+        </div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div
+          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-gradient-to-r from-primary to-primary-light p-4">
+            <h3 class="text-xl font-semibold text-white flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Modifier le client
+            </h3>
+          </div>
+          <form @submit.prevent="confirmerModification" class="p-6">
+            <div class="grid gap-4">
+              <div class="form-group">
+                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Numéro de compte</label>
+                <input v-model="clientEnEdition.numCompte" type="text" required
+                  class="w-full p-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white transition-colors" />
+              </div>
+              <div class="form-group">
+                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Nom</label>
+                <input v-model="clientEnEdition.nom" type="text" required
+                  class="w-full p-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white transition-colors" />
+              </div>
+              <div class="form-group">
+                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Solde (Ar)</label>
+                <input v-model.number="clientEnEdition.solde" type="number" required
+                  class="w-full p-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white transition-colors" />
+              </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+              <button type="button" @click="modalEdition = false"
+                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                Annuler
+              </button>
+              <button type="submit"
+                class="bg-gradient-to-r from-primary to-primary-light text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300">
+                Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        const clients = ref([]);
+        const nouveauClient = ref({ numCompte: '', nom: '', solde: 0 });
+        const clientEnEdition = ref({ id: '', numCompte: '', nom: '', solde: 0 });
+        const indexClientEnEdition = ref(-1);
+        const modalEdition = ref(false);
+        const isDarkMode = ref(false);
+
+        // ✅ Charger les données depuis json-server
+        const chargerClients = async () => {
+          try {
+            const response = await axios.get("http://localhost:8080/bancaire");
+            clients.value = response.data;
+          } catch (error) {
+            console.error("Erreur lors du chargement :", error);
+          }
+        };
+
+        onMounted(() => {
+          chargerClients();
+
+          // Mode sombre par défaut
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            isDarkMode.value = true;
+            document.documentElement.classList.add('dark');
+          }
+        });
+
+        // ✅ Ajouter un client
+        const ajouterClient = async () => {
+          const existe = clients.value.some(c => c.numCompte === nouveauClient.value.numCompte);
+          if (existe) {
+            alert("Ce numéro de compte existe déjà !");
+            return;
+          }
+
+          try {
+            await axios.post("http://localhost:8080/bancaire", { ...nouveauClient.value });
+            await chargerClients();
+            nouveauClient.value = { numCompte: '', nom: '', solde: 0 };
+          } catch (error) {
+            console.error("Erreur d'ajout :", error);
+          }
+        };
+
+        // ✅ Modifier un client
+        const editerClient = (index) => {
+          indexClientEnEdition.value = index;
+          clientEnEdition.value = { ...clients.value[index] };
+          modalEdition.value = true;
+        };
+
+        const confirmerModification = async () => {
+          const id = clientEnEdition.value.id;
+          try {
+            await axios.put(`http://localhost:8080/bancaire/${id}`, clientEnEdition.value);
+            modalEdition.value = false;
+            await chargerClients();
+          } catch (error) {
+            console.error("Erreur de mise à jour :", error);
+          }
+        };
+
+        // ✅ Supprimer un client
+        const supprimerClient = async (index) => {
+          const id = clients.value[index].id;
+          if (confirm("Supprimer ce client ?")) {
+            try {
+              await axios.delete(`http://localhost:8080/bancaire/${id}`);
+              await chargerClients();
+            } catch (error) {
+              console.error("Erreur de suppression :", error);
+            }
+          }
+        };
+
+        // 🧠 Observations & Statistiques
+        const getObservation = (solde) => {
+          if (solde < 1000) return 'Insuffisant';
+          if (solde >= 1000 && solde <= 5000) return 'Moyen';
+          if (solde > 5000) return 'Élevé';
+          return '';
+        };
+
+        const soldeTotal = computed(() =>
+          clients.value.reduce((total, c) => total + c.solde, 0)
+        );
+
+        const soldeMinimal = computed(() =>
+          clients.value.length ? Math.min(...clients.value.map(c => c.solde)) : 0
+        );
+
+        const soldeMaximal = computed(() =>
+          clients.value.length ? Math.max(...clients.value.map(c => c.solde)) : 0
+        );
+
+        const pieSegments = computed(() => {
+          if (clients.value.length === 0) return [];
+          let offset = 0;
+          return clients.value.map(c => {
+            const pct = (c.solde / soldeTotal.value) * 100;
+            const seg = { percentage: pct, offset };
+            offset += pct;
+            return seg;
+          });
+        });
+
+        const getBarColor = (i) => {
+          const colors = ['bg-gradient-to-r from-blue-500 to-blue-400',
+            'bg-gradient-to-r from-purple-500 to-purple-400',
+            'bg-gradient-to-r from-green-500 to-green-400',
+            'bg-gradient-to-r from-yellow-500 to-yellow-400',
+            'bg-gradient-to-r from-red-500 to-red-400'];
+          return colors[i % colors.length];
+        };
+
+        const getPieColor = (i) => {
+          const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+          return colors[i % colors.length];
+        };
+
+        const toggleDarkMode = () => {
+          isDarkMode.value = !isDarkMode.value;
+          document.documentElement.classList.toggle('dark', isDarkMode.value);
+        };
+
+        return {
+          clients,
+          nouveauClient,
+          clientEnEdition,
+          modalEdition,
+          isDarkMode,
+          soldeTotal,
+          soldeMinimal,
+          soldeMaximal,
+          pieSegments,
+          ajouterClient,
+          editerClient,
+          confirmerModification,
+          supprimerClient,
+          getObservation,
+          getBarColor,
+          getPieColor,
+          toggleDarkMode
+        };
+      }
+    }).mount('#app');
+  </script>
+
+</body>
+
+</html>
